@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-import pandas as pd
+# import pandas as pd
 import numpy as np
 import os
 import sys
@@ -35,13 +35,17 @@ from contextlib import nullcontext
 # plt.rcParams['legend.columnspacing'] = 1.0
 # plt.rcParams['legend.markerscale'] = 1.0
 
-import latexplotlib as lpl
-lpl.style.use('latex12pt')
-latex_doc_size = (347.12354, 549.138) 
-columns_per_page = 1.
-latex_doc_size = tuple(x / columns_per_page for x in latex_doc_size)
-lpl.size.set(*latex_doc_size)
+USELATEXPLOTLIB = False
 
+if USELATEXPLOTLIB:
+    import latexplotlib as lpl
+    lpl.style.use('latex12pt')
+    latex_doc_size = (347.12354, 549.138)
+    columns_per_page = 2.
+    latex_doc_size = tuple(x / columns_per_page for x in latex_doc_size)
+    lpl.size.set(*latex_doc_size)
+
+# label namkes for education status of a person
 EDU_LABELS = {
     0: "No Education",
     1: "Primary",
@@ -52,12 +56,22 @@ EDU_LABELS = {
     6: "Master Plus"
 }
 
+# label names for property status of a household
 PROP_LABELS = {
     0: "No Property",
     1: "Unknown Status",
     2: "Fully Damaged",
     3: "Partially Damaged",
     5: "Intact"
+}
+
+# colour mapping for property status
+PROP_COLORS = {
+    "No Property":       "#a6cee3",
+    "Unknown Status":    "#1f78b4",
+    "Fully Damaged":     "#b2df8a",
+    "Partially Damaged": "#33a02c",
+    "Intact":            "#fb9a99"
 }
 
 # give every disaggregator a nice display name
@@ -81,6 +95,7 @@ GENDER_NAMES = {
     "f": "Female",
     "m": "Male"
 }
+
 def pretty(name: str) -> str:
     """Turn a raw aggregator key into its user-friendly label."""
     return DISAGG_LABELS.get(name, name.replace('_',' ').title())
@@ -161,11 +176,8 @@ def plotCounts(plot_num, all_counts, save_fig, plot_folder, combine_plots_pdf):
     # - LatexPlotLib version
     #lpl.tight_layout()  # Uncommented to apply tight layout
 
-    # save plot    import os
-    import numpy as np
-    import pandas as pd
-    import plotly.express as px
-    from pathlib import Path
+    # save plot    
+
     if combine_plots_pdf:
         combine_plots_pdf.savefig(fig)
         print(f"Saved plot {plot_num} to PDF.")
@@ -339,21 +351,6 @@ def plotMigrationSankey(outdirs, save_fig=True, plot_folder="plots"): # CHANGE S
         except Exception as e:
             print(f"[ERROR] Couldn't write PNG: {e}")
             
-import os
-import numpy as np
-import pandas as pd
-import plotly.express as px
-from pathlib import Path
-
-# colour mapping for property status
-PROP_COLORS = {
-    "No Property":       "#a6cee3",
-    "Unknown Status":    "#1f78b4",
-    "Fully Damaged":     "#b2df8a",
-    "Partially Damaged": "#33a02c",
-    "Intact":            "#fb9a99"
-}
-
 def plotStackedBarProportions_Property(outdirs,
                                        filters=None,
                                        save_fig=True,
@@ -364,9 +361,9 @@ def plotStackedBarProportions_Property(outdirs,
 
     Saves HTML to  <plot_folder>/stacked_bar_property_proportions.html
     """
-    import pandas as pd, numpy as np, os
-    from pathlib import Path
-    import plotly.express as px
+    # import pandas as pd, numpy as np, os
+    # from pathlib import Path
+    # import plotly.express as px
 
     if filters is None or filters == ["None"]:
         filters = []
@@ -500,9 +497,9 @@ def plotStackedBarProportions_Gender(outdirs,
     100 %-stacked bar of net-arrival gender proportions (f / m)
     for every destination, averaged across all ensemble runs.
     """
-    import pandas as pd, numpy as np, os
-    from pathlib import Path
-    import plotly.express as px
+    # import pandas as pd, numpy as np, os
+    # from pathlib import Path
+    # import plotly.express as px
 
     if filters is None or filters == ["None"]:
         filters = []
@@ -1409,7 +1406,6 @@ def plotLineOverTime(outdirs, primary_filter_column='source', primary_filter_val
     fig.write_html(html)
     print(f"[INFO] saved HTML {html}")
     #fig.show()
-
 
 
 def plotNamedSingleByTimestep(code, outdirs, plot_type, FUMEheader, filters=[], disaggregator=None, primary_filter_column=None, primary_filter_value=None, plot_path='../..'):

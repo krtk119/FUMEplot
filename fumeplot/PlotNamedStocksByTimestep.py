@@ -581,14 +581,14 @@ def plotNamedStocksByTimestep(code, outdirs, plot_type, FUMEheader, plot_path='.
                animateLocationHistogram(outdirs, fi, i, sim_indices[i], data_indices[i], loc_names, y_label, save_fig=saving, plot_folder=plotfolder, combine_plots_pdf=pdf_pages)
                fi += 1
 
-            if plot_type == "loc_violin_gif" or plot_type == "all":
-                animateLocationViolins(outdirs, fi, i, sim_indices, data_indices, loc_names, y_label, save_fig=saving, plot_folder=plotfolder, combine_plots_pdf=pdf_pages)
-                
-            if plot_type == "choropleth" or plot_type == "all":
-                plotChoropleth(outdirs, plot_folder=plotfolder, geojson_dir=os.path.join(os.path.dirname(__file__), "ukraine_geojson"))
+        if plot_type == "loc_violin_gif" or plot_type == "all":
+            animateLocationViolins(outdirs, fi, i, sim_indices, data_indices, loc_names, y_label, save_fig=saving, plot_folder=plotfolder, combine_plots_pdf=pdf_pages)
             
-            if plot_type in ("bar_chart", "all"):
-                plotFinalOblastBarHTML(outdirs, plot_folder=plotfolder)
+        # if plot_type == "choropleth" or plot_type == "all":
+        #     plotChoropleth(outdirs, plot_folder=plotfolder, geojson_dir=os.path.join(os.path.dirname(__file__), "ukraine_geojson"))
+        
+        if plot_type in ("bar_chart", "all"):
+            plotFinalOblastBarHTML(outdirs, plot_folder=plotfolder)
 
     if not combine_plots_pdf:
         plt.show()
