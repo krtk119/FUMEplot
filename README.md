@@ -1,4 +1,7 @@
 # FUMEplot
+
+<img src="fumeplot_logo_720.png" alt="FUMEplot logo" width="200"/>
+
 Facilitated visualisation of Uncertainty in Model Ensemble outputs using plots.
 
 ## Python version and virtual enviroment
