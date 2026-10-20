@@ -1,0 +1,73 @@
+# Second-order Sobol study of the LJ MD model.
+#
+# Inherits everything (parameters, uncertain inputs, QoIs, labels, application)
+# from `base` and overrides only the sampling design and the verification setup.
+# Run with
+#
+#     python3 run_second_order.py second_order.yml
+#
+# Why PCE of degree 4: a degree-p expansion represents an interaction x_i x_j
+# by all terms x_i^a x_j^b with a, b >= 1 and a + b <= p. At p = 2 (the current
+# 81-run campaign) that is a single bilinear term per pair, so S_ij can only see
+# the product part of an interaction. p = 3 adds 2 terms per pair, p = 4 adds
+# 6, and also resolves third- and fourth-order terms, so the remainder R of
+# the partition of unity becomes measurable instead of zero by construction.
+
+base: campaign.yml
+
+campaign:
+  name: md_lj_s2
+  work_dir: campaigns_s2
+
+# Refinement ladder (full tensor Gauss-Legendre, (p+1)^4 runs):
+#   p = 2:  81   p = 3: 256   p = 4: 625
+# Gauss nodes of consecutive orders do not coincide (apart from the centre point
+# shared by even orders), so the coarser levels double as hold-out data for the
+# finest surrogate.
+methods:
+  - name: PCE-Gauss
+    sampler: PCESampler
+    kwargs: {rule: G}
+    refine: polynomial_order
+    levels: [2, 3, 4]
+    analysis_kwargs: {OutputDistributions: false}
+    properties:
+      design: full tensor Gauss-Legendre quadrature, (p+1)^d runs
+      extendable: refine p; second order resolved from p = 2, remainder R from p = 3
+      surrogate: yes (polynomial expansion)
+
+second_order:
+  # The engine seed is held fixed within a campaign (common random numbers), but
+  # MD trajectories are chaotic, so the fixed-seed response is still rough in the
+  # inputs. Re-running the finest design with other seeds measures how much of
+  # each index is due to that roughness.
+  seed_replicates: [43]
+
+  # A pair counts as resolved if S_ij exceeds resolve_factor times its
+  # uncertainty, taken as max(|seed difference|, |refinement increment|).
+  resolve_factor: 2.0
+
+  # Negative controls: inputs that cannot change the expectation of a QoI.
+  # The Langevin friction changes dynamics but not equilibrium averages, so any
+  # index of gamma on these QoIs is estimation error.
+  null_controls:
+    gamma: [epot, pressure, rdf]
+
+  # Independent re-estimation of S_i, S_ij, S_Ti on the finest PCE surrogate with
+  # the Saltelli/Jansen MC estimator (SALib), N (2d + 2) surrogate evaluations.
+  surrogate_mc: {n_base: 16384, seed: 0}
+
+  tolerance: 1.0e-6          # slack for the algebraic consistency checks
+  # Thermostat check |<T_kin> - T| / T. T_kin includes the drift of the pulled
+  # cloud, so a few % above T is expected at low friction (81-run campaign: max 6 %).
+  temperature_rel_tol: 0.05
+
+  # eta and hold-out Q^2 are reported only where std >= relevant_std * max(std):
+  # near-constant grid points (t -> 0, g(r) inside the core) make both ratios meaningless.
+  relevant_std: 0.05
+
+convergence:
+  reference: {type: finest, method: PCE-Gauss}
+  tolerances: [0.05, 0.01]
+  reference_run_cost_s: 13.4   # one MD run, single process
+  n_workers: 18
