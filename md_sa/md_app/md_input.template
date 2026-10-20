@@ -1,0 +1,17 @@
+{
+    "temperature":  $temperature,
+    "density":      $density,
+    "r_cut":        $r_cut,
+    "gamma":        $gamma,
+    "dt":           $dt,
+    "n_cells":      $n_cells,
+    "n_steps":      $n_steps,
+    "n_equil":      $n_equil,
+    "sample_every": $sample_every,
+    "rdf_window":   $rdf_window,
+    "rdf_bins":     $rdf_bins,
+    "r_max":        $r_max,
+    "n_pull":       $n_pull,
+    "pull_force":   $pull_force,
+    "seed":         $seed
+}
