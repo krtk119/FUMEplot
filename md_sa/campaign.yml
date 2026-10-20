@@ -1,0 +1,84 @@
+# Sensitivity campaign for a Lennard-Jones MD fluid (reduced LJ units).
+#
+# Everything that defines the sampling design is in this file and is copied
+# verbatim into `campaign_info` of the exported sobols.yml, so every Sobol plot
+# can be traced back to the uncertain parameters, their distributions and the
+# sampler that produced it.
+
+campaign:
+  name: md_lj_sa
+  work_dir: campaigns            # relative to this file
+
+application:
+  engine: lj_md                  # built-in numpy MD stand-in (md_app/lj_md.py)
+  template: md_app/md_input.template
+  input_file: md_input.json
+  output_file: md_output.json
+  runner: "{python} {app_dir}/lj_md.py {input} {output}"
+
+# All model inputs with their nominal values. Parameters not listed under
+# `uncertain` are held fixed at these values in every run.
+parameters:
+  temperature:  {type: float,   default: 1.2}
+  density:      {type: float,   default: 0.8}
+  r_cut:        {type: float,   default: 2.5}
+  gamma:        {type: float,   default: 1.0}
+  dt:           {type: float,   default: 0.005}
+  n_cells:      {type: integer, default: 4}      # N = 4 * n_cells^3 = 256 atoms
+  n_steps:      {type: integer, default: 3000}
+  n_equil:      {type: integer, default: 1000}
+  sample_every: {type: integer, default: 10}
+  rdf_window:   {type: integer, default: 150}    # steps per g(t, r) window
+  rdf_bins:     {type: integer, default: 64}
+  r_max:        {type: float,   default: 3.2}
+  n_pull:       {type: integer, default: 32}     # atoms in the pulled cloud
+  pull_force:   {type: float,   default: 64.0}   # total force on the cloud centroid (+x), 2 per atom
+  seed:         {type: integer, default: 42}     # fixed: common random numbers
+
+# Uncertain inputs: chaospy distribution name and its positional arguments.
+uncertain:
+  temperature: {dist: Uniform, args: [0.9, 1.5]}
+  density:     {dist: Uniform, args: [0.70, 0.90]}
+  r_cut:       {dist: Uniform, args: [2.0, 3.0]}
+  gamma:       {dist: Uniform, args: [0.1, 2.0]}
+
+# Sampling design. The analysis class is matched to the sampler:
+#   PCESampler -> PCEAnalysis (first, second, total order)
+#   SCSampler  -> SCAnalysis
+#   QMCSampler -> QMCAnalysis (first, total order only)
+sampler:
+  type: PCESampler
+  kwargs: {polynomial_order: 2, rule: G}   # full tensor Gauss rule: 3^4 = 81 runs
+  # PCE of degree p resolves interactions up to order p; with p=2 the
+  # higher-order remainder of the partition of unity is zero by construction.
+  analysis_kwargs: {OutputDistributions: false}   # skip KDE of QoI distributions (not needed for Sobol)
+
+# QoIs grouped by dimensionality; each group has its own plotting script.
+qois:
+  scalar:  [pull_disp, cloud_spread, diff_coeff, epot, pressure]   # 0D -> fumeplot/PlotSobolScalar.py
+  profile: [pull_disp_t, cloud_spread_t, epot_t, msd, rdf]          # 1D -> fumeplot/PlotSobolProfile.py
+  field:   [rdf_t]                        # 2D -> fumeplot/PlotSobolField.py
+
+# Display names used by the plotting scripts (matplotlib mathtext allowed).
+labels:
+  temperature: 'Temperature $T$'
+  density:     'Density $\rho$'
+  r_cut:       'Cutoff $r_c$'
+  gamma:       'Friction $\gamma$'
+  pull_disp:   'Pull centroid displacement $\Delta x_c$'
+  cloud_spread: 'Cloud spread $\sigma_c$'
+  pull_disp_t: 'Pull centroid displacement $\Delta x_c(t)$'
+  cloud_spread_t: 'Cloud spread $\sigma_c(t)$'
+  epot:        'Potential energy $U/N$'
+  pressure:    'Pressure $P$'
+  diff_coeff:  'Diffusion coefficient $D$'
+  epot_t:      'Potential energy $U(t)/N$'
+  msd:         'Mean squared displacement'
+  rdf:         'Radial distribution $g(r)$'
+  rdf_t:       'Time-resolved $g(t, r)$'
+  t:           'Time $t$'
+  lag:         'Lag time $\tau$'
+  r:           'Distance $r$'
+
+execution:
+  n_workers: 8
